@@ -1,0 +1,14 @@
+1. Добавить фильм:
+node cli.js --task=1 --title='aaa' --release_year='bbb' --format='ccc' --stars='ddd'
+2. Удалить фильм
+node cli.js --task=2 --id=602964b9737a927b00db84d5
+3. Показать информацию о фильме
+node cli.js --task=3 --id=602964b9737a927b00db84d5
+4. Показать список фильмов отсортированных по названию в алфавитном порядке	
+node cli.js --task=4
+5. Найти фильм по названию.
+node cli.js --task=5 --title="2001: A Space Odyssey"
+6. Найти фильм по имени актера.
+node cli.js --task=6 --stars="Gary Lockwood"
+7. Импорт фильмов с текстового файла (пример файла прилагается
+node cli.js --task=7
