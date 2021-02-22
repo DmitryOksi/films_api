@@ -2,10 +2,37 @@ const {
     parseFileToJson
 } = require('../helpers/parseFileToJSON');
 
+const {
+    checkDuplicateValue
+} = require('../helpers/validation/checkDuplicateValue')
+
+const {
+    checkValidYear
+} = require('../helpers/validation/checkValidYear')
+
+const {
+    callback
+} = require('../helpers/callback');
+
 module.exports = (router, film, upload) => {
     router.post('/', async (req, res) => {
         try {
-            res.json(await film.create(req.body));
+            const {
+                body
+            } = req;
+            const {
+                release_year,
+                stars,
+            } = body;
+            const responseCheckDuplicateValue = checkDuplicateValue(stars, callback);
+            if (!responseCheckDuplicateValue.success) {
+                res.status(400).json(responseCheckDuplicateValue.error_message);
+            }
+            const responseCheckValidYear = checkValidYear(release_year, callback);
+            if (!responseCheckValidYear.success) {
+                res.status(400).json(responseCheckValidYear.error_message);
+            }
+            res.json(await film.create(body));
         } catch (e) {
             res.status(400).json(e.message);
         }
@@ -28,10 +55,16 @@ module.exports = (router, film, upload) => {
         }
     });
 
-    router.get('/', async (req, res) => {
+    router.get('/order-sort/:value', async (req, res) => {
+
+        const {
+            params: {
+                value
+            }
+        } = req;
         try {
             res.json(await film.find().sort({
-                title: 1
+                title: value
             }));
         } catch (e) {
             res.status(400).json(e.message);
@@ -71,9 +104,58 @@ module.exports = (router, film, upload) => {
         }
     })
     router.post('/file', upload.single('file'), async (req, res) => {
+        const {
+            file: {
+                filename
+            }
+        } = req;
+        const responseParseFileToJson = parseFileToJson({
+            filename,
+            checkDuplicateValue,
+            checkValidYear,
+            callback,
+        })
+        responseParseFileToJson.then(async (films) => {
+            try {
+                films.forEach(film => {
+                    const {
+                        release_year,
+                        stars,
+                    } = film;
+
+                    const responseCheckDuplicateValue = checkDuplicateValue(stars, callback);
+                    if (!responseCheckDuplicateValue.success) {
+                        res.status(400).json(responseCheckDuplicateValue.error_message);
+                    }
+                    const responseCheckValidYear = checkValidYear(release_year, callback);
+                    if (!responseCheckValidYear.success) {
+                        res.status(400).json(responseCheckValidYear.error_message);
+                    }
+                });
+                res.json(await film.insertMany(films));
+            } catch (e) {
+                res.status(400).json(e.message);
+            }
+
+        }).catch((e) => {
+            res.status(400).json(e)
+        })
+    })
+    router.get('/star-title/:star/:title', async (req, res) => {
         try {
-            const films = await parseFileToJson(req.file.filename);
-            res.json(await film.insertMany(films));
+            const {
+                params: {
+                    star,
+                    title
+                }
+            } = req;
+            res.json(await film.find({
+                stars: {
+                    "$regex": star,
+                    "$options": "i"
+                },
+                title,
+            }));
         } catch (e) {
             res.status(400).json(e.message);
         }

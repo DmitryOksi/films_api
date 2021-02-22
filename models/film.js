@@ -2,10 +2,13 @@ module.exports = (mongoose, Schema) => {
     const schema = new Schema({
         title: {
             type: String,
+            unique : true,
             required: true,
         },
         release_year: {
-            type: String,
+            type: Number,
+            min: 1850,
+            max: 2021,
             required: true,
         },
         format: {
